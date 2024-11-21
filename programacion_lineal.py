@@ -1,6 +1,7 @@
 # Import PuLP library
 import pulp
 
+
 def read_input_file(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -30,6 +31,7 @@ def read_input_file(file_path):
 
     return rows, cols, ships
 
+
 file_path = 'resultados/5_5_6.txt'
 # Leo la data del archivo que nos pasaron.
 filas, columnas, longitud_barcos = read_input_file(file_path)
@@ -38,16 +40,10 @@ n = len(filas)
 m = len(columnas)
 k = len(longitud_barcos)
 
-barcos = list(range(k))  # Barcos
 
-
-
-def solve_batalla_naval( demandas_filas, demandas_columnas, barcos):
+def solve_batalla_naval(demandas_filas, demandas_columnas, barcos):
     n = len(demandas_filas)
     m = len(demandas_columnas)
-
-    # Crear problema
-    problem = pulp.LpProblem("BatallaNaval", pulp.LpMinimize)
 
     # Variables
     x = pulp.LpVariable.dicts("x", ((i, j) for i in range(n) for j in range(m)), 0, 1, pulp.LpBinary)
@@ -59,24 +55,22 @@ def solve_batalla_naval( demandas_filas, demandas_columnas, barcos):
                               pulp.LpBinary)
 
     # Función objetivo: minimizar la demanda incumplida
+    problem = pulp.LpProblem("BatallaNaval", pulp.LpMinimize)
     problem += pulp.lpSum(u[i] for i in range(n)) + pulp.lpSum(v[j] for j in range(m))
 
-    # Restricciones
+    # Restricciones por demanda
     for i in range(n):
-        # Restricción de demanda de filas
         problem += pulp.lpSum(x[i, j] for j in range(m)) + u[i] == demandas_filas[i]
-
     for j in range(m):
-        # Restricción de demanda de columnas
         problem += pulp.lpSum(x[i, j] for i in range(n)) + v[j] == demandas_columnas[j]
 
     for k, length in enumerate(barcos):
         # Restricciones para cada barco
         for i in range(n):
-            for j in range(m - length + 1): #horizontal
+            for j in range(m - length + 1):  #horizontal
                 problem += pulp.lpSum(x[i, j + l] for l in range(length)) >= y[i, j, k] * length
         for j in range(m):
-            for i in range(n - length + 1): #vertical
+            for i in range(n - length + 1):  #vertical
                 problem += pulp.lpSum(x[i + l, j] for l in range(length)) >= z[j, i, k] * length
 
         # Un barco puede colocarse una vez como máximo (horizontal o verticalmente)
@@ -86,15 +80,15 @@ def solve_batalla_naval( demandas_filas, demandas_columnas, barcos):
     # Las celdas ocupadas con maximo del barco
     problem += pulp.lpSum(x[i, j] for i in range(n) for j in range(m)) <= sum(barcos)
 
-    # Resolver problema
+
     problem.solve()
 
-    # Resultados
     solution = [[pulp.value(x[i, j]) for j in range(m)] for i in range(n)]
     incumplido_por_filas = [pulp.value(u[i]) for i in range(n)]
     incumplido_por_columna = [pulp.value(v[j]) for j in range(m)]
 
     return solution, incumplido_por_filas, incumplido_por_columna
+
 
 solucion, incumplido_por_filas, incumplido_por_columna = solve_batalla_naval(filas, columnas, longitud_barcos)
 
