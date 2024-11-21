@@ -1,5 +1,5 @@
 # Import PuLP library
-from pulp import *
+import pulp
 
 def read_input_file(file_path):
     with open(file_path, 'r') as file:
@@ -30,150 +30,80 @@ def read_input_file(file_path):
 
     return rows, cols, ships
 
-file_path = 'resultados/10_10_10.txt'
+file_path = 'resultados/5_5_6.txt'
 # Leo la data del archivo que nos pasaron.
-rows, cols, ships_len = read_input_file(file_path)
+filas, columnas, longitud_barcos = read_input_file(file_path)
 
-n = len(rows)
-m = len(cols)
-k = len(ships_len)
+n = len(filas)
+m = len(columnas)
+k = len(longitud_barcos)
 
 barcos = list(range(k))  # Barcos
-orientations = ['H', 'V']  # Horizontal (H) o Vertical (V)
-positions = [(i, j) for i in range(n) for j in range(m)]  # Armo el tablero
-
-# Generar posiciones iniciales factibles para cada barco y orientación
-F_po = {}  # F_po[(p, o)] = lista de posiciones iniciales factibles para barco p con orientación o
-for p in barcos:
-    b_p = ships_len[p]
-    for o in orientations:
-        feasible_positions = []
-        if o == 'H':
-            for i in range(n):
-                for j in range(m - b_p + 1):
-                    feasible_positions.append((i, j))
-        elif o == 'V':
-            for i in range(n - b_p + 1):
-                for j in range(m):
-                    feasible_positions.append((i, j))
-        F_po[(p, o)] = feasible_positions
-
-# Mapeo de celdas a las posiciones de los barcos
-cell_coverage = {pos: [] for pos in positions}
-for p in barcos:
-    b_p = ships_len[p]
-    for o in orientations:
-        for (i, j) in F_po[(p, o)]:
-            celdas_ocupadas = []
-            if o == 'H':
-                celdas_ocupadas = [(i, j + offset) for offset in range(b_p)]
-            elif o == 'V':
-                celdas_ocupadas = [(i + offset, j) for offset in range(b_p)]
-            for cell in celdas_ocupadas:
-                cell_coverage[cell].append((p, o, i, j))
-
-
-#### Modelo de programación lineal ########
-
-# Variables de decisión
-
-# barco_en_posicion_{p,o,i,j} = 1 si el barco p se coloca con orientación o en la posición (i, j)
-barco_en_posicion = LpVariable.dicts(
-    "s", [(p, o, i, j) for p in barcos for o in orientations for (i, j) in F_po[(p, o)]], 0, 1,
-    LpBinary)
-
-# Variable de decisión para saber si está ocupada o no una celda
-c = LpVariable.dicts("c", positions, 0, 1, LpBinary)
-
-# La demanda incumplida es la diferencia entre la demanda total y la cantidad de celdas ocupadas
-demanda_incumplida_filas = sum(rows[i] - lpSum(c[(i, j)] for j in range(m)) for i in range(n))
-demanda_incumplida_columnas = sum(cols[j] - lpSum(c[(i, j)] for i in range(n)) for j in range(m))
-
-# Es un problema que busca minimizar la demanda incumplida
-prob = LpProblem("LaBatallaNaval", LpMinimize)
-demanda_incumplida_total = demanda_incumplida_filas + demanda_incumplida_columnas
-prob += demanda_incumplida_total
-
-
-# Restricción 1: Cada barco se coloca exactamente una vez si o si
-for p in barcos:
-    prob += lpSum([barco_en_posicion[(p, o, i, j)] for o in orientations for (i, j) in F_po[(p, o)]]) == 1
-
-# Restricción 2: Las celdas ocupadas deben corresponder a las posiciones de los barcos
-for (i, j) in positions:
-    prob += c[(i, j)] >= lpSum([barco_en_posicion[(p, o, i_p, j_p)] for (p, o, i_p, j_p) in cell_coverage[(i, j)]])
-
-# Restricción 3: No superposición de barcos
-for (i, j) in positions:
-    prob += lpSum([barco_en_posicion[(p, o, i_p, j_p)] for (p, o, i_p, j_p) in cell_coverage[(i, j)]]) <= 1
-
-# Restricción 4: No adyacencia entre barcos
-for p in barcos:
-    b_p = ships_len[p]
-    for o in orientations:
-        for (i, j) in F_po[(p, o)]:
-            celdas_ocupadas = []
-            if o == 'H':
-                celdas_ocupadas = [(i, j + offset) for offset in range(b_p)]
-            elif o == 'V':
-                celdas_ocupadas = [(i + offset, j) for offset in range(b_p)]
-            adyacentes = set()
-            for (pos_fila, pos_col) in celdas_ocupadas:
-                for fila_delta in [-1, 0, 1]:
-                    for columna_delta in [-1, 0, 1]:
-                        filas_ady = pos_fila + fila_delta
-                        cols_ady = pos_col + columna_delta
-                        if (0 <= filas_ady < n) and (0 <= cols_ady < m):
-                            if (filas_ady, cols_ady) not in celdas_ocupadas:
-                                adyacentes.add((filas_ady, cols_ady))
-            for (filas_ady, cols_ady) in adyacentes:
-                prob += c[(filas_ady, cols_ady)] + barco_en_posicion[(p, o, i, j)] <= 1
-
-# Restricción 5: Demanda de filas menor a la dada
-for i in range(n):
-    prob += lpSum([c[(i, j)] for j in range(m)]) <= rows[i]
-
-# Restricción 6: Demanda de columnas menor a la dada
-for j in range(m):
-    prob += lpSum([c[(i, j)] for i in range(n)]) <= cols[j]
-
-# Resolver el modelo
-prob.solve()
 
 
 
+def solve_batalla_naval( demandas_filas, demandas_columnas, barcos):
+    n = len(demandas_filas)
+    m = len(demandas_columnas)
 
+    # Crear problema
+    problem = pulp.LpProblem("BatallaNaval", pulp.LpMinimize)
 
+    # Variables
+    x = pulp.LpVariable.dicts("x", ((i, j) for i in range(n) for j in range(m)), 0, 1, pulp.LpBinary)
+    u = pulp.LpVariable.dicts("u", (i for i in range(n)), 0, None, pulp.LpInteger)
+    v = pulp.LpVariable.dicts("v", (j for j in range(m)), 0, None, pulp.LpInteger)
+    y = pulp.LpVariable.dicts("y", ((i, b, k) for i in range(n) for b in range(m) for k in range(len(barcos))), 0, 1,
+                              pulp.LpBinary)
+    z = pulp.LpVariable.dicts("z", ((j, b, k) for j in range(m) for b in range(n) for k in range(len(barcos))), 0, 1,
+                              pulp.LpBinary)
 
-# Output de los resultados
-print("Status:", LpStatus[prob.status])
+    # Función objetivo: minimizar la demanda incumplida
+    problem += pulp.lpSum(u[i] for i in range(n)) + pulp.lpSum(v[j] for j in range(m))
 
-if LpStatus[prob.status] == 'Optimal':
-    grid = [['-' for _ in range(m)] for _ in range(n)]
-    for p in barcos:
-        for o in orientations:
-            for (i, j) in F_po[(p, o)]:
-                if value(barco_en_posicion[(p, o, i, j)]) == 1:
-                    b_p = ships_len[p]
-                    if o == 'H':
-                        for offset in range(b_p):
-                            grid[i][j + offset] = str(p)
-                    elif o == 'V':
-                        for offset in range(b_p):
-                            grid[i + offset][j] = str(p)
+    # Restricciones
+    for i in range(n):
+        # Restricción de demanda de filas
+        problem += pulp.lpSum(x[i, j] for j in range(m)) + u[i] == demandas_filas[i]
 
+    for j in range(m):
+        # Restricción de demanda de columnas
+        problem += pulp.lpSum(x[i, j] for i in range(n)) + v[j] == demandas_columnas[j]
 
-    # Calcular la demanda total y la demanda cumplida
-    demanda_total = sum(rows) + sum(cols)
-    demanda_cumplida = demanda_total - demanda_incumplida_total
+    for k, length in enumerate(barcos):
+        # Restricciones para cada barco
+        for i in range(n):
+            for j in range(m - length + 1): #horizontal
+                problem += pulp.lpSum(x[i, j + l] for l in range(length)) >= y[i, j, k] * length
+        for j in range(m):
+            for i in range(n - length + 1): #vertical
+                problem += pulp.lpSum(x[i + l, j] for l in range(length)) >= z[j, i, k] * length
 
-    # Imprimir la solución
-    print("Tablero con la solución:")
-    for row in grid:
-        print(' '.join(row))
+        # Un barco puede colocarse una vez como máximo (horizontal o verticalmente)
+        problem += (pulp.lpSum(y[i, b, k] for i in range(n) for b in range(m))
+                    + pulp.lpSum(z[j, b, k] for j in range(m) for b in range(n)) <= 1)
 
-    print(f"Demanda cumplida: {int(value(demanda_cumplida))}")
-    print(f"Demanda total: {demanda_total}")
-    print(f"Demanda incumplida: {int(value(demanda_incumplida_total))}")
-else:
-    print("No se encontró solución.")
+    # Las celdas ocupadas con maximo del barco
+    problem += pulp.lpSum(x[i, j] for i in range(n) for j in range(m)) <= sum(barcos)
+
+    # Resolver problema
+    problem.solve()
+
+    # Resultados
+    solution = [[pulp.value(x[i, j]) for j in range(m)] for i in range(n)]
+    incumplido_por_filas = [pulp.value(u[i]) for i in range(n)]
+    incumplido_por_columna = [pulp.value(v[j]) for j in range(m)]
+
+    return solution, incumplido_por_filas, incumplido_por_columna
+
+solucion, incumplido_por_filas, incumplido_por_columna = solve_batalla_naval(filas, columnas, longitud_barcos)
+
+print("Tablero:")
+for row in solucion:
+    print(row)
+demanda_incumplida_filas = int(sum(incumplido_por_filas))
+demanda_incumplida_columnas = int(sum(incumplido_por_columna))
+demanda_total = sum(filas) + sum(columnas)
+#print("Demanda incumplida:", demanda_incumplida_filas + demanda_incumplida_columnas)
+print("Demanda cumplida:", demanda_total - (demanda_incumplida_columnas + demanda_incumplida_filas))
+print("Demanda total:", demanda_total)
