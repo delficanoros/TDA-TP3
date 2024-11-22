@@ -69,4 +69,4 @@ def resolve(file_path):
     print(f"Demanda total: {demand_total}")
     print("Tablero final:")
     for row in optimal_board:
-        print("".join(["#" if cell == 1 else "." for cell in row]))
+        print("".join(["1" if cell == 1 else "." for cell in row]))
