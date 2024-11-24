@@ -43,9 +43,9 @@ def actualizar_posicion_matriz(matriz, i, j, largo, orientacion, value):
 def calcular_demanda(matriz, restricciones_fil, restricciones_col):
     n, m = len(matriz), len(matriz[0])
     suma_filas = sum(
-        [min(sum(matriz[i]), restricciones_fil[i]) for i in range(n)])
+        [sum(matriz[i]) for i in range(n)])
     suma_columnas = sum(
-        [min(sum(matriz[i][j] for i in range(n)), restricciones_col[j]) for j in range(m)])
+        [sum(matriz[i][j] for i in range(n)) for j in range(m)])
     total_filas = sum(restricciones_fil)
     total_cols = sum(restricciones_col)
     demanda_llena = suma_columnas + suma_filas
