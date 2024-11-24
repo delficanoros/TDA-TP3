@@ -31,17 +31,6 @@ def calcular_celdas_adyacentes(n, m, covered_cells):
                 if 0 <= i_adj < n and 0 <= j_adj < m and (i_adj, j_adj) not in covered_cells:
                     adjacent_cells.add((i_adj, j_adj))
     return adjacent_cells
-
-def imprimir_resultados(matriz, rows, cols):
-    n, m = len(rows), len(cols)
-    demanda_incumplida = sum(rows[i] - lpSum(matriz[(i, j)] for j in range(m)) for i in range(n)) + \
-                         sum(cols[j] - lpSum(matriz[(i, j)] for i in range(n)) for j in range(m))
-    print("Tablero con la solución:")
-    for i in range(n):
-        print(" ".join("1" if value(matriz[(i, j)]) > 0.5 else "-" for j in range(m)))
-    print(f"Demanda cumplida: {int(sum(rows) + sum(cols)) - int(value(demanda_incumplida))}")
-    print(f"Demanda total: {int(sum(rows) + sum(cols))}")
-
 def resolve_batalla_naval(nro_filas, nro_columnas, ships_len, rows, cols, posibles_posiciones):
     ships = list(range(len(ships_len)))  # Barcos enumerados
     orientations = ['H', 'V']  # Horizontal (H) o Vertical (V)
