@@ -1,9 +1,10 @@
+import sys
 from backtracking import batalla_naval, calcular_demanda
-import time
+from aproximacion import aproximación
+from programacion_lineal import posibles_posiciones, resolve_batalla_naval
 
 
 def parse_lines_without_numeral(lines):
-    # vamos a ignorar las de comentarios de arriba porque interfieren
     return [line.strip() for line in lines if not line.strip().startswith("#")]
 
 
@@ -15,7 +16,7 @@ def read_input_file(file_path):
     configs = []
     for line in valid_lines:
         if line == "":
-            if config_actual:  # llegue y entre aca porque termino la parte pasada del archivo entonces ya puedo guardarla
+            if config_actual:
                 configs.append(config_actual)
                 config_actual = []
         else:
@@ -24,10 +25,9 @@ def read_input_file(file_path):
         configs.append(config_actual)
     if len(configs) != 3:
         raise ValueError(
-            f"Ee encontraron {len(configs)} configuraciones en lugar de 3. No te olvides que necesitamos demandas de filas y columnas y ademas  los largos de los barcos separados por un salto de linea")
+            f"Se encontraron {len(configs)} configuraciones en lugar de 3. Debes incluir: demandas de filas, columnas y longitudes de barcos separados por un salto de línea.")
     try:
         row_restrictions = [int(x) for x in configs[0]]
-
         col_restrictions = [int(x) for x in configs[1]]
         ships = list(map(int, configs[2]))
     except ValueError:
@@ -36,25 +36,50 @@ def read_input_file(file_path):
     return row_restrictions, col_restrictions, ships
 
 
-def resolve(file_path):
+def main():
+    if len(sys.argv) < 2:
+        print("Error: Debes proporcionar la ruta de un archivo de entrada como parámetro.")
+        print("Uso: python script.py <ruta_del_archivo>")
+        sys.exit(1)
+
+    file_path = sys.argv[1]
+
     try:
         row_restrictions, col_restrictions, ships = read_input_file(file_path)
     except ValueError as e:
-        print(f"falla al leer el archivo: {e}")
-        return
+        print(f"Error al leer el archivo: {e}")
+        sys.exit(1)
+
+    print("Selecciona el algoritmo que deseas usar para resolver el problema:")
+    print("1. Backtracking")
+    print("2. Programación lineal")
+    print("3. Aproximación")
+    choice = input("Ingresa el número correspondiente a tu elección: ")
 
     n = len(row_restrictions)
     m = len(col_restrictions)
     table = [[0 for _ in range(m)] for _ in range(n)]
-    demand_fulfilled, optimal_board, positions = batalla_naval(
-        table, ships, row_restrictions, col_restrictions)
 
-    _, demand_total = calcular_demanda(
+    if choice == "1":
+        demand_fulfilled, optimal_board, positions = batalla_naval(
+            table, ships, row_restrictions, col_restrictions)
+    elif choice == "2":
+        orientations = ['H', 'V']
+        positions = posibles_posiciones(ships, orientations, n, m)
+        prob, optimal_board = resolve_batalla_naval(
+            n, m, ships, n, m, positions)
+
+    elif choice == "3":
+        optimal_board, positions = aproximación(
+            table, ships, row_restrictions, col_restrictions)
+    else:
+        print("Opción no válida. Finalizando el programa.")
+        sys.exit(1)
+
+    demand_fulfilled, demand_total = calcular_demanda(
         optimal_board, row_restrictions, col_restrictions)
 
-    file_name = file_path.split("/")[-1]
-
-    print(f"{file_name}")
+    print(f"Archivo procesado: {file_path}")
     print("Posiciones:")
     for i, position in enumerate(positions):
         if position is None:
@@ -70,3 +95,7 @@ def resolve(file_path):
     print("Tablero final:")
     for row in optimal_board:
         print("".join(["1" if cell == 1 else "." for cell in row]))
+
+
+if __name__ == "__main__":
+    main()

@@ -75,15 +75,16 @@ def colocar_barco_y_ocupar_casilleros(matriz, barco, x, y, es_horizontal, restri
 # asumo que recibo una matriz llena de 0s
 def aproximación(matriz, barcos, restricciones_fils, restricciones_cols):
     barcos.sort(reverse=True)
-
+    posiciones = []
     for barco in barcos:  # empiezo con los de mayor tamaño
         x, y, es_horizontal = buscar_posicion(
             matriz, barco, restricciones_fils, restricciones_cols)
         if x != -1:
+            posiciones.append((x, y))
             colocar_barco_y_ocupar_casilleros(
                 matriz, barco, x, y, es_horizontal, restricciones_fils, restricciones_cols)
 
-    return matriz
+    return matriz, posiciones
 
 
 matriz = [[0]*5 for _ in range(3)]
