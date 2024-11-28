@@ -1,3 +1,4 @@
+
 def hay_adyacentes(solucion, x, y):
     for i in [-1, 0, 1]:
         for j in [-1, 0, 1]:
@@ -6,7 +7,6 @@ def hay_adyacentes(solucion, x, y):
             if (i != 0 or j != 0) and 0 <= xi < len(solucion) and 0 <= yi < len(solucion[0]):
                 if solucion[xi][yi] == 1:
                     return True
-
     return False
 
 
@@ -15,8 +15,10 @@ def se_puede_ubicar(matriz, fil, col, largo, orientacion, restricciones_fil, res
     if (orientacion == "horizontal" and col + largo > m) or (orientacion == "vertical" and fil + largo > n):
         return False
 
-    if hay_adyacentes(matriz, fil, col):
-        return False
+    for k in range(largo):
+        x, y = (fil, col + k) if orientacion == "horizontal" else (fil + k, col)
+        if matriz[x][y] == 1 or hay_adyacentes(matriz, x, y):
+            return False
 
     if orientacion == "horizontal":
         if sum(matriz[fil]) + largo > restricciones_fil[fil]:
