@@ -1,6 +1,7 @@
 import sys
 from backtracking import batalla_naval, calcular_demanda
 from aproximacion import aproximación
+from programacion_lineal import posibles_posiciones, resolve_batalla_naval
 
 
 def parse_lines_without_numeral(lines):
@@ -63,11 +64,11 @@ def main():
         demand_fulfilled, optimal_board, positions = batalla_naval(
             table, ships, row_restrictions, col_restrictions)
     elif choice == "2":
-        """orientations = ['H', 'V']
+        orientations = ['H', 'V']
         positions = posibles_posiciones(ships, orientations, n, m)
         prob, optimal_board = resolve_batalla_naval(
-            n, m, ships, n, m, posiciones)
-"""
+            n, m, ships, n, m, positions)
+
     elif choice == "3":
         optimal_board, positions = aproximación(
             table, ships, row_restrictions, col_restrictions)
