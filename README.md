@@ -25,5 +25,6 @@ Por otra parte, en el repositorio se encuentran los 3 algoritmos:
 También se encuentran los validadores
 
 Además se encuentran las dos notebooks con los ejemplos de compilación y gráficos de los tiempos. 
+En la carpeta datos se pueden encontrar sets de datos propios que utilizamos para hacer pruebas además de los sets dados por el curso.
 
 Por último, se encuentra el informe. 
