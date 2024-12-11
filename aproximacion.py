@@ -38,28 +38,30 @@ def es_posicion_valida(matriz, barco, x, y, es_horizontal, restricciones_fils, r
         return True
 
 
-def buscar_posicion(matriz, barco, restricciones_fils, restricciones_cols):
-    if max(restricciones_fils) > max(restricciones_cols):
-        for i, demanda in enumerate(restricciones_fils):
-            if demanda >= barco:
-                for j in range(len(matriz[0])):
-                    if es_posicion_valida(matriz, barco, i, j, True, restricciones_fils, restricciones_cols):
-                        return i, j, True
-                    # si no lo pude insertar dependiendo de la demanda de la fila, lo salteo
-    else:
-        for i, demanda in enumerate(restricciones_cols):
-            if demanda >= barco:
-                for j in range(len(matriz)):
-                    if es_posicion_valida(matriz, barco, j, i, False, restricciones_fils, restricciones_cols):
-                        return j, i, False
 
-    print("No se puede insertar")
+def buscar_posicion(matriz, barco, restricciones_fils, restricciones_cols):
+    max_restriccion_fila = max(restricciones_fils)
+    max_restriccion_columna = max(restricciones_cols)
+    if max_restriccion_fila >= max_restriccion_columna:
+        fila = restricciones_fils.index(max_restriccion_fila)
+        for j in range(len(matriz[0])):
+            if es_posicion_valida(matriz, barco, fila, j, True, restricciones_fils, restricciones_cols):
+                return fila, j, True
+
+    else:
+        columna = restricciones_cols.index(max_restriccion_columna)
+        for i in range(len(matriz)):
+            if es_posicion_valida(matriz, barco, i, columna, False, restricciones_fils, restricciones_cols):
+                return i, columna, False
+
     return -1, -1, False
 
 
 def colocar_barco_y_ocupar_casilleros(matriz, barco, x, y, es_horizontal, restricciones_fils, restricciones_cols):
     if barco == 1:
         matriz[x][y] = 1
+        restricciones_fils[x] -= 1
+        restricciones_cols[y] -= 1
     elif es_horizontal:
         for i in range(barco):
             matriz[x][y + i] = 1
