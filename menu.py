@@ -1,7 +1,7 @@
 import sys
 from backtracking import batalla_naval, calcular_demanda
 from aproximacion import aproximación
-from programacion_lineal import posibles_posiciones, resolve_batalla_naval
+from programacion_lineal import posibles_posiciones, resolve_batalla_naval, reconstruir_tablero_y_calcular_demanda
 
 
 def parse_lines_without_numeral(lines):
@@ -65,9 +65,9 @@ def main():
             table, ships, row_restrictions, col_restrictions)
     elif choice == "2":
         orientations = ['H', 'V']
-        positions = posibles_posiciones(ships, orientations, n, m)
+        positions = posibles_posiciones(ships, orientations, row_restrictions, col_restrictions)
         prob, optimal_board = resolve_batalla_naval(
-            n, m, ships, n, m, positions)
+            n, m, ships, row_restrictions, col_restrictions, positions)
 
     elif choice == "3":
         optimal_board, positions = aproximación(
@@ -76,25 +76,37 @@ def main():
         print("Opción no válida. Finalizando el programa.")
         sys.exit(1)
 
-    demand_fulfilled, demand_total = calcular_demanda(
+    if choice == "1" or choice == "3":
+        demand_fulfilled, demand_total = calcular_demanda(
         optimal_board, row_restrictions, col_restrictions)
-
-    print(f"Archivo procesado: {file_path}")
-    print("Posiciones:")
-    for i, position in enumerate(positions):
-        if position is None:
-            print(f"{i}: None")
-        else:
-            start, end = position
-            if start == end:
-                print(f"{i}: {start}")
+        print(f"Archivo procesado: {file_path}")
+        print("Posiciones:")
+        for i, position in enumerate(positions):
+            if position is None:
+                print(f"{i}: None")
             else:
-                print(f"{i}: {start} - {end}")
-    print(f"Demanda cumplida: {demand_fulfilled}")
-    print(f"Demanda total: {demand_total}")
-    print("Tablero final:")
-    for row in optimal_board:
-        print("".join(["1" if cell == 1 else "." for cell in row]))
+                start, end = position
+                if start == end:
+                    print(f"{i}: {start}")
+                else:
+                    print(f"{i}: {start} - {end}")
+        print(f"Demanda cumplida: {demand_fulfilled}")
+        print(f"Demanda total: {demand_total}")
+        print("Tablero final:")
+        for row in optimal_board:
+            print("".join(["1" if cell == 1 else "." for cell in row]))
+
+    elif choice == "2":
+        tablero_reconstruido, demand_fulfilled, demand_total = reconstruir_tablero_y_calcular_demanda(
+                     n, m, optimal_board, ships, row_restrictions, col_restrictions)
+        print("Tablero reconstruido:")
+        for fila in tablero_reconstruido:
+            print(" ".join(fila))
+
+        print(f"Demanda cumplida: {demand_fulfilled}")
+        print(f"Demanda total: {demand_total}")
+
+
 
 
 if __name__ == "__main__":

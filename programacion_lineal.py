@@ -1,6 +1,4 @@
 from pulp import *
-import menu
-
 
 def posibles_posiciones(ships_len, orientations, rows, cols):
     nro_cols = len(cols)
@@ -175,30 +173,3 @@ def reconstruir_tablero_y_calcular_demanda(n, m, matriz_resuelta, ships_len, row
     demanda_total = sum(rows) + sum(cols)
 
     return tablero, demanda_total_cumplida, demanda_total
-
-
-# Leer datos del archivo
-file_path = 'resultados/30_25_25.txt'
-rows, cols, ships = menu.read_input_file(file_path)
-n, m = len(rows), len(cols)
-
-orientations = ['H', 'V']
-posiciones = posibles_posiciones(ships, orientations, rows, cols)
-
-# Resolver el modelo
-prob, matriz_resuelta = resolve_batalla_naval(
-    n, m, ships, rows, cols, posiciones)
-
-if LpStatus[prob.status] == 'Optimal':
-    tablero_reconstruido, demanda_cumplida, demanda_total = reconstruir_tablero_y_calcular_demanda(
-        n, m, matriz_resuelta, ships, rows, cols
-    )
-
-    print("Tablero reconstruido:")
-    for fila in tablero_reconstruido:
-        print(" ".join(fila))
-
-    print(f"Demanda cumplida: {demanda_cumplida}")
-    print(f"Demanda total: {demanda_total}")
-else:
-    print("No se encontró solución.")
